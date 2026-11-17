@@ -1,0 +1,27 @@
+name: Build ClaudeOS ISO
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache
+          df -h /
+
+      - name: Build the ISO inside a Debian 12 container
+        run: |
+          docker run --rm --privileged -v "$PWD":/work -w /work debian:bookworm \
+            bash -c "apt-get update && apt-get install -y sudo && bash claudeos-eee.sh build"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: claudeos-iso
+          path: claudeos.iso
+          retention-days: 7
